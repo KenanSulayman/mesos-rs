@@ -98,10 +98,10 @@ pub fn scalar<'a>(name: &'a str, role: &'a str, value: f64) -> Resource {
     res
 }
 
-pub fn get_scalar_resource_sum(offers: Vec<&Offer>) -> f64 {
+pub fn get_scalar_resource_sum<'a>(name: &'a str, offers: Vec<&Offer>) -> f64 {
     offers.iter()
           .flat_map(|o| o.get_resources())
-          .filter(|r| r.get_name() == "mem")
+          .filter(|r| r.get_name() == name)
           .map(|c| c.get_scalar())
           .fold(0f64, |acc, mem_res| acc + mem_res.get_value())
 }
