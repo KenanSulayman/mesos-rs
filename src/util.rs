@@ -1,7 +1,6 @@
-use hyper::header::{Accept, Connection, ContentType, Headers, Quality,
-                    QualityItem, qitem};
+use hyper::header::{Accept, ContentType, Headers, qitem};
 use hyper::mime::{Mime, SubLevel, TopLevel};
-use protobuf::{self, Message};
+use protobuf;
 
 use proto::mesos::*;
 
@@ -46,7 +45,7 @@ pub fn task_id<'a>(id: &'a str) -> TaskID {
 
 pub fn task_info<'a>(name: &'a str,
                      task_id: &TaskID,
-                     agent_id: &AgentID,
+                     slave_id: &SlaveID,
                      command: &CommandInfo,
                      resources: Vec<Resource>)
                      -> TaskInfo {
@@ -54,7 +53,7 @@ pub fn task_info<'a>(name: &'a str,
     let mut task_info = TaskInfo::new();
     task_info.set_name(name.to_string());
     task_info.set_task_id(task_id.clone());
-    task_info.set_agent_id(agent_id.clone());
+    task_info.set_slave_id(slave_id.clone());
     task_info.set_command(command.clone());
     task_info.set_resources(protobuf::RepeatedField::from_vec(resources));
     task_info
@@ -62,7 +61,7 @@ pub fn task_info<'a>(name: &'a str,
 
 pub fn task_info_for_container<'a>(name: &'a str,
                                    task_id: &TaskID,
-                                   agent_id: &AgentID,
+                                   slave_id: &SlaveID,
                                    command: &CommandInfo,
                                    container: &ContainerInfo,
                                    resources: Vec<Resource>)
@@ -70,19 +69,19 @@ pub fn task_info_for_container<'a>(name: &'a str,
     let mut task_info = TaskInfo::new();
     task_info.set_name(name.to_string());
     task_info.set_task_id(task_id.clone());
-    task_info.set_agent_id(agent_id.clone());
+    task_info.set_slave_id(slave_id.clone());
     task_info.set_command(command.clone());
     task_info.set_container(container.clone());
     task_info.set_resources(protobuf::RepeatedField::from_vec(resources));
     task_info
 }
 
-pub fn launch_operation(task_infos: Vec<TaskInfo>) -> Operation {
-    let mut launch = Operation_Launch::new();
+pub fn launch_operation(task_infos: Vec<TaskInfo>) -> Offer_Operation {
+    let mut launch = Offer_Operation_Launch::new();
     launch.set_task_infos(protobuf::RepeatedField::from_vec(task_infos));
 
-    let mut operation = Operation::new();
-    operation.set_field_type(Operation_Type::LAUNCH);
+    let mut operation = Offer_Operation::new();
+    operation.set_field_type(Offer_Operation_Type::LAUNCH);
     operation.set_launch(launch);
     operation
 }
@@ -99,7 +98,7 @@ pub fn scalar<'a>(name: &'a str, role: &'a str, value: f64) -> Resource {
     res
 }
 
-pub fn get_scalar_resource_sum<'a>(name: &'a str, offers: Vec<&Offer>) -> f64 {
+pub fn get_scalar_resource_sum(offers: Vec<&Offer>) -> f64 {
     offers.iter()
           .flat_map(|o| o.get_resources())
           .filter(|r| r.get_name() == "mem")

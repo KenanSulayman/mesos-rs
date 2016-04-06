@@ -1,19 +1,16 @@
-use std::io;
 use std::sync::{Arc, Mutex};
 
 use hyper;
 use hyper::Client;
 use hyper::client::response::Response;
-use hyper::header::{Accept, Connection, ContentType, Headers, Quality,
-                    QualityItem, qitem};
 use protobuf::{self, Message};
 
 use proto::scheduler::{Call, Call_Accept, Call_Acknowledge, Call_Decline,
                        Call_Kill, Call_Message, Call_Reconcile,
                        Call_Reconcile_Task, Call_Request, Call_Shutdown,
                        Call_Subscribe, Call_Type};
-use proto::mesos::{AgentID, ExecutorID, Filters, FrameworkID, FrameworkInfo,
-                   OfferID, Operation, Request, TaskID, TaskInfo};
+use proto::mesos::{ExecutorID, Filters, FrameworkID, FrameworkInfo, OfferID,
+                   Offer_Operation, Request, SlaveID, TaskID, TaskInfo};
 use util;
 
 #[derive(Clone)]
@@ -38,8 +35,7 @@ impl SchedulerClient {
     }
 
     pub fn subscribe(&self,
-                     mut framework_info: FrameworkInfo,
-                     force: Option<bool>)
+                     mut framework_info: FrameworkInfo)
                      -> hyper::Result<Response> {
         match self.get_framework_id() {
             Some(fwid) => framework_info.set_id(fwid),
@@ -74,7 +70,7 @@ impl SchedulerClient {
 
     pub fn accept(&self,
                   offer_ids: Vec<OfferID>,
-                  operations: Vec<Operation>,
+                  operations: Vec<Offer_Operation>,
                   filters: Option<Filters>)
                   -> hyper::Result<Response> {
 
@@ -118,12 +114,12 @@ impl SchedulerClient {
 
     pub fn kill(&self,
                 task_id: TaskID,
-                agent_id: Option<AgentID>)
+                slave_id: Option<SlaveID>)
                 -> hyper::Result<Response> {
         let mut kill = Call_Kill::new();
         kill.set_task_id(task_id);
-        if agent_id.is_some() {
-            kill.set_agent_id(agent_id.unwrap());
+        if slave_id.is_some() {
+            kill.set_slave_id(slave_id.unwrap());
         }
 
         let mut call = Call::new();
@@ -135,11 +131,11 @@ impl SchedulerClient {
 
     pub fn shutdown(&self,
                     executor_id: ExecutorID,
-                    agent_id: AgentID)
+                    slave_id: SlaveID)
                     -> hyper::Result<Response> {
         let mut shutdown = Call_Shutdown::new();
         shutdown.set_executor_id(executor_id);
-        shutdown.set_agent_id(agent_id);
+        shutdown.set_slave_id(slave_id);
 
         let mut call = Call::new();
         call.set_field_type(Call_Type::SHUTDOWN);
@@ -149,12 +145,12 @@ impl SchedulerClient {
     }
 
     pub fn acknowledge(&self,
-                       agent_id: AgentID,
+                       slave_id: SlaveID,
                        task_id: TaskID,
                        uuid: Vec<u8>)
                        -> hyper::Result<Response> {
         let mut acknowledge = Call_Acknowledge::new();
-        acknowledge.set_agent_id(agent_id);
+        acknowledge.set_slave_id(slave_id);
         acknowledge.set_task_id(task_id);
         acknowledge.set_uuid(uuid);
 
@@ -167,12 +163,12 @@ impl SchedulerClient {
 
     pub fn reconcile_task(&self,
                           task_id: TaskID,
-                          agent_id: Option<AgentID>)
+                          slave_id: Option<SlaveID>)
                           -> hyper::Result<Response> {
         let mut reconcile = Call_Reconcile_Task::new();
         reconcile.set_task_id(task_id);
-        if agent_id.is_some() {
-            reconcile.set_agent_id(agent_id.unwrap());
+        if slave_id.is_some() {
+            reconcile.set_slave_id(slave_id.unwrap());
         }
 
         self.reconcile(vec![reconcile])
@@ -193,12 +189,12 @@ impl SchedulerClient {
 
 
     pub fn message(&self,
-                   agent_id: AgentID,
+                   slave_id: SlaveID,
                    executor_id: ExecutorID,
                    data: Vec<u8>)
                    -> hyper::Result<Response> {
         let mut message = Call_Message::new();
-        message.set_agent_id(agent_id);
+        message.set_slave_id(slave_id);
         message.set_executor_id(executor_id);
         message.set_data(data);
 

@@ -1,10 +1,8 @@
 use std::io::{self, Error, ErrorKind, Write};
-use std::sync::mpsc::{Receiver, Sender, channel};
-use std::str::FromStr;
-use std::u64;
+use std::sync::mpsc::Sender;
 use std::str;
 
-use protobuf::{self, Message};
+use protobuf;
 
 use proto::scheduler::Event;
 
@@ -63,7 +61,7 @@ impl Write for RecordIOCodec {
                     // we've read an entire message, send it
                     let event: Event = protobuf::parse_from_bytes(&*buf)
                                            .unwrap();
-                    self.send.send(Ok(event));
+                    self.send.send(Ok(event)).unwrap();
                 } else {
                     self.buf = Some(buf);
                 }

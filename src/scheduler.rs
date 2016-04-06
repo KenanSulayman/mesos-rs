@@ -14,17 +14,16 @@ pub trait Scheduler {
     fn update(&mut self, client: &SchedulerClient, status: &TaskStatus);
     fn message(&mut self,
                client: &SchedulerClient,
-               agent_id: &AgentID,
+               slave_id: &SlaveID,
                executor_id: &ExecutorID,
                data: Vec<u8>);
     fn failure(&mut self,
                client: &SchedulerClient,
-               agent_id: Option<&AgentID>,
+               slave_id: Option<&SlaveID>,
                executor_id: Option<&ExecutorID>,
                status: Option<i32>);
     fn error(&mut self, client: &SchedulerClient, message: String);
-    fn heartbeat(&mut self, client: &SchedulerClient) {
-    }
+    fn heartbeat(&mut self, client: &SchedulerClient);
     fn disconnected(&mut self);
 }
 

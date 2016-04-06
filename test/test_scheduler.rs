@@ -1,5 +1,5 @@
-use mesos::{Scheduler, SchedulerClient, SchedulerConf,
-            ProtobufCallbackRouter, run_protobuf_scheduler};
+use mesos::{ProtobufCallbackRouter, Scheduler, SchedulerClient, SchedulerConf,
+            run_protobuf_scheduler};
 use mesos::proto::*;
 use mesos::util;
 
@@ -26,7 +26,7 @@ impl Scheduler for TestScheduler {
 
     // Inverse offers are only available with the HTTP API
     // and are great for doing things like triggering
-    // replication with stateful services before the agent
+    // replication with stateful services before the slave
     // goes down for maintenance.
     fn inverse_offers(&mut self,
                       client: &SchedulerClient,
@@ -42,13 +42,13 @@ impl Scheduler for TestScheduler {
 
     fn offers(&mut self, client: &SchedulerClient, offers: Vec<&Offer>) {
 
-        // Offers are guaranteed to be for the same agent, and
+        // Offers are guaranteed to be for the same slave, and
         // there will be at least one.
-        let agent_id = offers[0].get_agent_id();
+        let slave_id = offers[0].get_slave_id();
 
-        println!("received {} offers from agent {}",
+        println!("received {} offers from slave {}",
                  offers.len(),
-                 agent_id.get_value());
+                 slave_id.get_value());
 
         let offer_ids: Vec<OfferID> = offers.iter()
                                             .map(|o| o.get_id().clone())
@@ -82,7 +82,7 @@ impl Scheduler for TestScheduler {
 
             let task_info = util::task_info(name,
                                             &task_id,
-                                            agent_id,
+                                            slave_id,
                                             &command,
                                             resources);
             tasks.push(task_info);
@@ -104,7 +104,7 @@ impl Scheduler for TestScheduler {
 
     fn message(&mut self,
                client: &SchedulerClient,
-               agent_id: &AgentID,
+               slave_id: &SlaveID,
                executor_id: &ExecutorID,
                data: Vec<u8>) {
         println!("received message");
@@ -112,7 +112,7 @@ impl Scheduler for TestScheduler {
 
     fn failure(&mut self,
                client: &SchedulerClient,
-               agent_id: Option<&AgentID>,
+               slave_id: Option<&SlaveID>,
                executor_id: Option<&ExecutorID>,
                status: Option<i32>) {
         println!("received failure");

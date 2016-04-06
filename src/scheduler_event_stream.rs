@@ -1,15 +1,10 @@
-use std::io::{self, Error, ErrorKind, Write};
-use std::sync::{Arc, Mutex};
+use std::io::{self, Error, ErrorKind};
 use std::sync::mpsc::channel;
 use std::thread;
 
-use itertools::Itertools;
-
 use scheduler_client::SchedulerClient;
 use recordio::RecordIOCodec;
-use proto::mesos::{FrameworkID, Offer};
-use proto::scheduler::*;
-use {Scheduler, SchedulerConf, SchedulerRouter, util};
+use {SchedulerConf, SchedulerRouter, util};
 
 pub fn run_protobuf_scheduler<'a>(router: &'a mut SchedulerRouter,
                                   conf: SchedulerConf) {
@@ -29,18 +24,21 @@ pub fn run_protobuf_scheduler<'a>(router: &'a mut SchedulerRouter,
                                      &*local_conf.name,
                                      local_conf.framework_timeout
                                                .clone());
-            match local_client.subscribe(framework_info, None) {
-                Err(e) => {
+            match local_client.subscribe(framework_info) {
+                Err(_) => {
                     tx.clone()
                       .send(Err(Error::new(ErrorKind::ConnectionReset,
-                                           "server disconnected")));
+                                           "server disconnected")))
+                      .unwrap();
                 }
-                Ok(mut res) => match io::copy(&mut res, &mut codec) {
-                    Err(e) => {
-                        tx.clone().send(Err(e));
+                Ok(mut res) => {
+                    match io::copy(&mut res, &mut codec) {
+                        Err(e) => {
+                            tx.clone().send(Err(e)).unwrap();
+                        }
+                        Ok(_) => (),
                     }
-                    Ok(_) => (),
-                },
+                }
             }
             // TODO(tyler) exponential truncated backoff
         }
