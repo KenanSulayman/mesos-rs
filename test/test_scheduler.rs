@@ -17,11 +17,11 @@ impl TestScheduler {
 impl Scheduler for TestScheduler {
     fn subscribed(&mut self,
                   client: &SchedulerClient,
-                  framework_id: &FrameworkID,
-                  heartbeat_interval_seconds: Option<f64>) {
+                  _framework_id: &FrameworkID,
+                  _heartbeat_interval_seconds: Option<f64>) {
         println!("received subscribed");
 
-        client.reconcile(vec![]);
+        client.reconcile(vec![]).unwrap();
     }
 
     // Inverse offers are only available with the HTTP API
@@ -37,7 +37,7 @@ impl Scheduler for TestScheduler {
         let offer_ids = inverse_offers.iter()
                                       .map(|o| o.get_id().clone())
                                       .collect();
-        client.decline(offer_ids, None);
+        client.decline(offer_ids, None).unwrap();
     }
 
     fn offers(&mut self, client: &SchedulerClient, offers: Vec<&Offer>) {
@@ -89,40 +89,40 @@ impl Scheduler for TestScheduler {
             offer_cpus -= 1f64;
             offer_mem -= 128f64;
         }
-        client.launch(offer_ids, tasks, None);
+        client.launch(offer_ids, tasks, None).unwrap();
     }
 
-    fn rescind(&mut self, client: &SchedulerClient, offer_id: &OfferID) {
+    fn rescind(&mut self, _client: &SchedulerClient, _offer_id: &OfferID) {
         println!("received rescind");
     }
 
-    fn update(&mut self, client: &SchedulerClient, status: &TaskStatus) {
+    fn update(&mut self, _client: &SchedulerClient, status: &TaskStatus) {
         println!("received update {:?} from {}",
                  status.get_state(),
                  status.get_task_id().get_value());
     }
 
     fn message(&mut self,
-               client: &SchedulerClient,
-               slave_id: &SlaveID,
-               executor_id: &ExecutorID,
-               data: Vec<u8>) {
+               _client: &SchedulerClient,
+               _slave_id: &SlaveID,
+               _executor_id: &ExecutorID,
+               _data: Vec<u8>) {
         println!("received message");
     }
 
     fn failure(&mut self,
-               client: &SchedulerClient,
-               slave_id: Option<&SlaveID>,
-               executor_id: Option<&ExecutorID>,
-               status: Option<i32>) {
+               _client: &SchedulerClient,
+               _slave_id: Option<&SlaveID>,
+               _executor_id: Option<&ExecutorID>,
+               _status: Option<i32>) {
         println!("received failure");
     }
 
-    fn error(&mut self, client: &SchedulerClient, message: String) {
+    fn error(&mut self, _client: &SchedulerClient, _message: String) {
         println!("received error");
     }
 
-    fn heartbeat(&mut self, client: &SchedulerClient) {
+    fn heartbeat(&mut self, _client: &SchedulerClient) {
         println!("received heartbeat");
     }
 
