@@ -13,6 +13,6 @@ pub use scheduler_client::SchedulerClient;
 pub use scheduler_router::{SchedulerRouter, ProtobufCallbackRouter};
 pub use scheduler_event_stream::run_protobuf_scheduler;
 
-extern crate hyper;
+#[macro_use] extern crate hyper;
 extern crate protobuf;
 extern crate itertools;

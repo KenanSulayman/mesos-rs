@@ -9,40 +9,34 @@ use {SchedulerConf, SchedulerRouter, util};
 pub fn run_protobuf_scheduler<'a>(router: &'a mut SchedulerRouter,
                                   conf: SchedulerConf) {
 
-    let client = SchedulerClient::new(conf.clone().master_url.to_string() +
-                                      "/api/v1/scheduler",
-                                      conf.clone().framework_id);
+    let mut client = SchedulerClient::new(conf.clone().master_url.to_string() +
+                                          "/api/v1/scheduler",
+                                          conf.clone().framework_id);
     let (tx, rx) = channel();
+    let mut codec = RecordIOCodec::new(tx.clone());
 
-    let local_client = client.clone();
-    let local_conf = conf.clone();
-    thread::spawn(move || {
-        loop {
-            let mut codec = RecordIOCodec::new(tx.clone());
-            let framework_info =
-                util::framework_info(&*local_conf.user,
-                                     &*local_conf.name,
-                                     local_conf.framework_timeout
-                                               .clone());
-            match local_client.subscribe(framework_info) {
-                Err(_) => {
-                    tx.clone()
-                      .send(Err(Error::new(ErrorKind::ConnectionReset,
-                                           "server disconnected")))
-                      .unwrap();
-                }
-                Ok(mut res) => {
-                    match io::copy(&mut res, &mut codec) {
-                        Err(e) => {
-                            tx.clone().send(Err(e)).unwrap();
-                        }
-                        Ok(_) => (),
-                    }
-                }
-            }
-            // TODO(tyler) exponential truncated backoff
+    let framework_info = util::framework_info(&*conf.user,
+                                              &*conf.name,
+                                              conf.framework_timeout
+                                                  .clone());
+    match client.subscribe(framework_info) {
+        Err(_) => {
+            tx.clone()
+              .send(Err(Error::new(ErrorKind::ConnectionReset,
+                                   "server disconnected")))
+              .unwrap();
         }
-    });
+        Ok(mut res) => {
+            thread::spawn(move || {
+                match io::copy(&mut res, &mut codec) {
+                    Err(e) => {
+                        tx.clone().send(Err(e)).unwrap();
+                    }
+                    Ok(_) => {}
+                }
+            });
+        }
+    }
 
     router.run(rx, client, conf);
 }

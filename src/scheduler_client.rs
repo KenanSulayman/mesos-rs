@@ -17,6 +17,7 @@ use util;
 pub struct SchedulerClient {
     pub url: String,
     pub framework_id: Arc<Mutex<Option<FrameworkID>>>,
+    pub stream_id: String,
 }
 
 impl SchedulerClient {
@@ -26,6 +27,7 @@ impl SchedulerClient {
         SchedulerClient {
             url: url + "/api/v1/scheduler",
             framework_id: Arc::new(Mutex::new(framework_id)),
+            stream_id: "".to_string(),
         }
     }
 
@@ -34,7 +36,7 @@ impl SchedulerClient {
         id
     }
 
-    pub fn subscribe(&self,
+    pub fn subscribe(&mut self,
                      mut framework_info: FrameworkInfo)
                      -> hyper::Result<Response> {
         match self.get_framework_id() {
@@ -49,7 +51,21 @@ impl SchedulerClient {
         call.set_field_type(Call_Type::SUBSCRIBE);
         call.set_subscribe(subscribe);
 
-        self.post(&mut call)
+        let response = self.post(&mut call);
+        match response {
+            Ok(ref result) => {
+                match result.headers.get_raw("Mesos-Stream-Id") {
+                    Some(stream_id) => {
+                        let id = stream_id[0].clone();
+                        self.stream_id = String::from_utf8(id).unwrap()
+                    }
+                    None => {}
+                }
+            }
+            Err(_) => {}
+        }
+
+        response
     }
 
     pub fn teardown(&self) -> hyper::Result<Response> {
@@ -234,7 +250,7 @@ impl SchedulerClient {
         let data = &*call.write_to_bytes().unwrap();
 
         client.post(&*self.url)
-              .headers(util::protobuf_headers())
+              .headers(util::protobuf_headers(self.stream_id.clone()))
               .body(data)
               .send()
     }

@@ -4,7 +4,9 @@ use protobuf;
 
 use proto::mesos::*;
 
-pub fn protobuf_headers() -> Headers {
+header! { (MesosStreamId, "Mesos-Stream-Id") => [String] }
+
+pub fn protobuf_headers(stream_id: String) -> Headers {
     let mut headers = Headers::new();
 
     headers.set(Accept(vec![
@@ -16,6 +18,9 @@ pub fn protobuf_headers() -> Headers {
     headers.set(ContentType(Mime(TopLevel::Application,
                                  SubLevel::Ext("x-protobuf".to_owned()),
                                  vec![])));
+    if !stream_id.is_empty() {
+        headers.set(MesosStreamId(stream_id.to_owned()))
+    }
 
     headers
 }
