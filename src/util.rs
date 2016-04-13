@@ -19,7 +19,7 @@ pub fn protobuf_headers(stream_id: String) -> Headers {
                                  SubLevel::Ext("x-protobuf".to_owned()),
                                  vec![])));
 
-    headers.set(Connection::close());
+    // headers.set(Connection::close());
 
     if !stream_id.is_empty() {
         headers.set(MesosStreamId(stream_id.to_owned()))
