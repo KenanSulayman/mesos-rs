@@ -1,4 +1,4 @@
-use hyper::header::{Accept, Connection, ContentType, Headers, qitem};
+use hyper::header::{Accept, ContentType, Headers, qitem};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use protobuf;
 
@@ -18,8 +18,6 @@ pub fn protobuf_headers(stream_id: String) -> Headers {
     headers.set(ContentType(Mime(TopLevel::Application,
                                  SubLevel::Ext("x-protobuf".to_owned()),
                                  vec![])));
-
-    // headers.set(Connection::close());
 
     if !stream_id.is_empty() {
         headers.set(MesosStreamId(stream_id.to_owned()))

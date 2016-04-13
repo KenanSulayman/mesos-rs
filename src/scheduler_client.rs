@@ -13,11 +13,11 @@ use proto::mesos::{ExecutorID, Filters, FrameworkID, FrameworkInfo, OfferID,
                    Offer_Operation, Request, SlaveID, TaskID, TaskInfo};
 use util;
 
-#[derive(Clone)]
 pub struct SchedulerClient {
     pub url: String,
     pub framework_id: Arc<Mutex<Option<FrameworkID>>>,
     pub stream_id: String,
+    pub client: Client,
 }
 
 impl SchedulerClient {
@@ -28,6 +28,7 @@ impl SchedulerClient {
             url: url + "/api/v1/scheduler",
             framework_id: Arc::new(Mutex::new(framework_id)),
             stream_id: "".to_string(),
+            client: Client::new(),
         }
     }
 
@@ -245,13 +246,12 @@ impl SchedulerClient {
             _ => (),
         }
 
-        let client = Client::new();
-
         let data = &*call.write_to_bytes().unwrap();
 
-        client.post(&*self.url)
-              .headers(util::protobuf_headers(self.stream_id.clone()))
-              .body(data)
-              .send()
+        self.client
+            .post(&*self.url)
+            .headers(util::protobuf_headers(self.stream_id.clone()))
+            .body(data)
+            .send()
     }
 }
