@@ -20,6 +20,16 @@ pub struct SchedulerClient {
     pub client: Client,
 }
 
+impl Clone for SchedulerClient {
+    fn clone(&self) -> Self {
+        SchedulerClient {
+            url: self.url.clone(),
+            framework_id: Arc::new(Mutex::new(self.get_framework_id())),
+            stream_id: self.stream_id.clone(),
+            client: Client::new(),
+        }
+    }
+}
 impl SchedulerClient {
     pub fn new(url: String,
                framework_id: Option<FrameworkID>)
