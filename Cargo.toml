@@ -1,18 +1,19 @@
 [package]
-name = "mesos"
-version = "0.3.1"
 authors = ["Tyler Neely <t@jujit.su>", "Marcel Neuhausler"]
 description = "Mesos library using the new HTTP API"
-license = "Apache-2.0"
 homepage = "https://github.com/spacejam/mesos-rs"
 keywords = ["mesos", "HA", "distributed-systems", "containers", "scheduler"]
-
-[[test]]
-
-name = "test"
-path = "test/test.rs"
+license = "Apache-2.0"
+name = "mesos"
+version = "0.3.1"
 
 [dependencies]
-protobuf = "1.0.18"
-hyper = "0.7.1"
-itertools = "0.4.3"
+crossbeam = "0.2.10"
+hyper = "0.9.10"
+itertools = "0.4.19"
+protobuf = "1.0.24"
+time = "0.1.35"
+
+[[test]]
+name = "test"
+path = "test/test.rs"
